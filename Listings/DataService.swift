@@ -21,11 +21,21 @@ final class DataService {
 
     private let businessId: String
     private let productsAPI: MoyaProvider<ProductsAPI>
+    private let productStore: ProductDataStoring
 
     init(businessId: String,
-         productsAPI: MoyaProvider<ProductsAPI>) {
+         productsAPI: MoyaProvider<ProductsAPI>,
+         productStore: ProductDataStoring) {
         self.businessId = businessId
         self.productsAPI = productsAPI
+        self.productStore = productStore
+
+        productStore.fetchProducts().subscribe(
+            onSuccess: { [unowned self] products in
+                self._products.on(.next(products))
+                self.fetchProducts()
+            })
+            .disposed(by: bag)
     }
 
 }
@@ -45,6 +55,9 @@ extension DataService: ProductsDataServicing {
             .asSingle()
             .filterSuccessfulStatusCodes()
             .map([Product].self)
+            .flatMap { [unowned self] items in
+                return self.productStore.store(products: items)
+        }
 
         log.info("fetching products")
         request.subscribe(

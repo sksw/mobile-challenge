@@ -49,10 +49,15 @@ final class DependencyRegistrar {
         container.register(DataService.self) { resolver in
             DataService(
                 businessId: AppSecrets.businessId,
-                productsAPI: resolver.resolve(MoyaProvider<ProductsAPI>.self)!
+                productsAPI: resolver.resolve(MoyaProvider<ProductsAPI>.self)!,
+                productStore: resolver.resolve(ProductDataStoring.self)!
             )
         }
         .inObjectScope(.container)
+
+        container.register(ProductDataStoring.self) { _ in
+            ProductDataStore(userDefaults: UserDefaults.standard)
+        }
 
         // MARK: common
         container.register(Provider<Locale>.self) { _ in
